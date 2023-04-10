@@ -36,8 +36,8 @@ type Operator interface {
 }
 
 type LeaseReader interface {
-	ListLeases(ctx context.Context, query *query.Query) (*coordinationv1.LeaseList, error)
-	WatchLease(ctx context.Context, query *query.Query) (watch.Interface, error)
+	ListLeases(ctx context.Context, namespace string, query *query.Query) (*coordinationv1.LeaseList, error)
+	WatchLease(ctx context.Context, namespace string, query *query.Query) (watch.Interface, error)
 	GetLease(ctx context.Context, name string, resourceVersion string) (*coordinationv1.Lease, error)
 	GetLeaseWithNamespace(ctx context.Context, name string, namespace string) (*coordinationv1.Lease, error)
 	LeaseReaderEx

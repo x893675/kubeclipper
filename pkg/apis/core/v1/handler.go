@@ -1906,11 +1906,11 @@ func (h *handler) ResetClusterStatus(request *restful.Request, response *restful
 func (h *handler) ListLeases(request *restful.Request, response *restful.Response) {
 	q := query.ParseQueryParameter(request)
 	if q.Watch {
-		h.watchLeases(request, response, q)
+		h.watchLeases(request, response, "", q)
 		return
 	}
 	if clientrest.IsInformerRawQuery(request.Request) {
-		result, err := h.leaseOperator.ListLeases(request.Request.Context(), q)
+		result, err := h.leaseOperator.ListLeases(request.Request.Context(), "", q)
 		if err != nil {
 			restplus.HandleInternalError(response, request, err)
 			return
@@ -1921,7 +1921,7 @@ func (h *handler) ListLeases(request *restful.Request, response *restful.Respons
 	response.WriteHeader(http.StatusOK)
 }
 
-func (h *handler) watchLeases(req *restful.Request, resp *restful.Response, q *query.Query) {
+func (h *handler) watchLeases(req *restful.Request, resp *restful.Response, namespace string, q *query.Query) {
 	timeout := time.Duration(0)
 	if q.TimeoutSeconds != nil {
 		timeout = time.Duration(*q.TimeoutSeconds) * time.Second
@@ -1930,7 +1930,7 @@ func (h *handler) watchLeases(req *restful.Request, resp *restful.Response, q *q
 		timeout = time.Duration(float64(query.MinTimeoutSeconds) * (rand.Float64() + 1.0))
 	}
 
-	watcher, err := h.leaseOperator.WatchLease(req.Request.Context(), q)
+	watcher, err := h.leaseOperator.WatchLease(req.Request.Context(), namespace, q)
 	if err != nil {
 		restplus.HandleInternalError(resp, req, err)
 		return
@@ -3588,4 +3588,34 @@ func (h *handler) registryValidate(_ context.Context, cp *v1.Registry) error {
 		}
 	}
 	return nil
+}
+
+func (h *handler) ListNamespaceResource(request *restful.Request, response *restful.Response) {
+	ns := request.PathParameter("namespace")
+	resource := request.PathParameter("resource")
+	// test for leases
+	if resource != "leases" {
+		restplus.HandleBadRequest(response, request, errors.New("resource not found"))
+		return
+	}
+	q := query.ParseQueryParameter(request)
+	if q.Watch {
+		h.watchLeases(request, response, ns, q)
+		return
+	}
+	if clientrest.IsInformerRawQuery(request.Request) {
+		result, err := h.leaseOperator.ListLeases(request.Request.Context(), ns, q)
+		if err != nil {
+			restplus.HandleInternalError(response, request, err)
+			return
+		}
+		_ = response.WriteHeaderAndEntity(http.StatusOK, result)
+	} else {
+		result, err := h.leaseOperator.ListLeases(request.Request.Context(), ns, q)
+		if err != nil {
+			restplus.HandleInternalError(response, request, err)
+			return
+		}
+		_ = response.WriteHeaderAndEntity(http.StatusOK, result)
+	}
 }

@@ -49,7 +49,10 @@ func NewLeaseOperator(leaseStorage rest.StandardStorage) Operator {
 	}
 }
 
-func (l *leaseOperator) ListLeases(ctx context.Context, query *query.Query) (*coordinationv1.LeaseList, error) {
+func (l *leaseOperator) ListLeases(ctx context.Context, namespace string, query *query.Query) (*coordinationv1.LeaseList, error) {
+	if namespace != "" {
+		ctx = genericapirequest.WithNamespace(ctx, namespace)
+	}
 	list, err := models.List(ctx, l.storage, query)
 	if err != nil {
 		return nil, err
@@ -67,7 +70,10 @@ func (l *leaseOperator) GetLease(ctx context.Context, name string, resourceVersi
 	return obj.(*coordinationv1.Lease), nil
 }
 
-func (l *leaseOperator) WatchLease(ctx context.Context, query *query.Query) (watch.Interface, error) {
+func (l *leaseOperator) WatchLease(ctx context.Context, namespace string, query *query.Query) (watch.Interface, error) {
+	if namespace != "" {
+		ctx = genericapirequest.WithNamespace(ctx, namespace)
+	}
 	return models.Watch(ctx, l.storage, query)
 }
 

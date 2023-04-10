@@ -73,8 +73,8 @@ func (c *CoreV1Client) Regions() RegionsInterface {
 	return newRegions(c)
 }
 
-func (c *CoreV1Client) Leases() LeasesInterface {
-	return newLeases(c)
+func (c *CoreV1Client) Leases(namespace string) LeasesInterface {
+	return newLeases(c, namespace)
 }
 
 func (c *CoreV1Client) Operations() OperationsInterface {

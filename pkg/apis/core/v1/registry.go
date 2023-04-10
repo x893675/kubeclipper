@@ -1137,6 +1137,36 @@ func SetupWebService(h *handler) *restful.WebService {
 		Returns(http.StatusOK, http.StatusText(http.StatusOK), corev1.Registry{}).
 		Returns(http.StatusNotFound, http.StatusText(http.StatusNotFound), nil))
 
+	webservice.Route(webservice.GET("/namespaces/{namespace}/{resource}").
+		To(h.ListNamespaceResource).
+		Metadata(restfulspec.KeyOpenAPITags, []string{CoreRegionTag}).
+		Doc("List namespace resource.").
+		Param(webservice.PathParameter("namespaces", "namespace name").
+			Required(true).
+			DataType("string")).
+		Param(webservice.PathParameter("resource", "namespace name").
+			Required(true).
+			DataType("string")).
+		Param(webservice.QueryParameter(query.PagingParam, "paging query, e.g. limit=100,page=1").
+			Required(false).
+			DataFormat("limit=%d,page=%d").
+			DefaultValue("limit=10,page=1")).
+		Param(webservice.QueryParameter(query.ParameterLabelSelector, "resource filter by metadata label").
+			Required(false).
+			DataFormat("labelSelector=%s=%s")).
+		Param(webservice.QueryParameter(query.ParameterFieldSelector, "resource filter by field").
+			Required(false).
+			DataFormat("fieldSelector=%s=%s")).
+		Param(webservice.QueryParameter(query.ParamReverse, "resource sort reverse or not").Required(false).
+			DataType("boolean")).
+		Param(webservice.QueryParameter(query.ParameterWatch, "watch request").Required(false).
+			DataType("boolean")).
+		Param(webservice.QueryParameter(query.ParameterTimeoutSeconds, "watch timeout seconds").
+			DataType("integer").
+			DefaultValue("60").
+			Required(false)).
+		Returns(http.StatusOK, http.StatusText(http.StatusOK), models.PageableResponse{}))
+
 	return webservice
 }
 

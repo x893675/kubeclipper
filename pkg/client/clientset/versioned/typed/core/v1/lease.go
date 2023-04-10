@@ -34,7 +34,7 @@ import (
 var _ LeasesInterface = (*leases)(nil)
 
 type LeasesGetter interface {
-	Leases() LeasesInterface
+	Leases(namespace string) LeasesInterface
 }
 
 type LeasesInterface interface {
@@ -45,15 +45,20 @@ type LeasesInterface interface {
 
 type leases struct {
 	client rest.Interface
+	ns     string
 }
 
-func newLeases(c *CoreV1Client) *leases {
-	return &leases{client: c.RESTClient()}
+func newLeases(c *CoreV1Client, namespace string) *leases {
+	return &leases{
+		client: c.RESTClient(),
+		ns:     namespace,
+	}
 }
 
 func (c *leases) Get(ctx context.Context, name string, opts v1.GetOptions) (result *coordinationv1.Lease, err error) {
 	result = &coordinationv1.Lease{}
 	err = c.client.Get().
+		Namespace(c.ns).
 		Resource("leases").
 		Name(name).
 		VersionedParams(&opts, scheme.ParameterCodec).
@@ -69,6 +74,7 @@ func (c *leases) List(ctx context.Context, opts v1.ListOptions) (result *coordin
 	}
 	result = &coordinationv1.LeaseList{}
 	err = c.client.Get().
+		Namespace(c.ns).
 		Resource("leases").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
@@ -84,6 +90,7 @@ func (c *leases) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interfac
 	}
 	opts.Watch = true
 	return c.client.Get().
+		Namespace(c.ns).
 		Resource("leases").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
